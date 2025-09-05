@@ -1,10 +1,9 @@
 
+Básicamente, tu misión será ayudarme a transformar una vs code extension existente en una que implemente y extendienda de este patrón en las docs oficiales: https://code.visualstudio.com/api/extension-guides/ai/chat-tutorial.
+
 Me gustaría que crearas una base de markdowns para una sesión contigo de vibecoding. Quiero unos ficheros claros de entrada, desarrollo y salida. Que podamos encorsetar bien la sesión. Tengo 10 "premium requests" contigo así que como vs code copilot agent tienes 10 rondas para codificar interactuando con la base y me gustaría una plantilla de trabajo independiente para cada una. Que cada agente deberá rellenar al final de su iteración.
 
 A continuación te pongo las instrucciones, recuerda que puedes inspeccionar toda la #codebase pero que estamos trabajando documentalmente en E:\LAB_AGOSTO\ORACLE_HALT_ALEPH_VERSION\vscode-alephscript-extension\vibecoding y nuestra vs code extension objetio es #file:vscode-alephscript-extension.
-
-
-
 
 Hola, en esta #codebase que te resumo en #file:codebase.md hay una extensión de vscode como IDE para el sistema. 
 
