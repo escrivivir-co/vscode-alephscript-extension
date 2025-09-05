@@ -84,9 +84,26 @@ Transformar la actual extensión webview-heavy en una integración nativa VS Cod
 - **UIs**: `threejs-gamify-ui/`, `web-rtc-gamify-ui/`
 
 ## ✅ PRÓXIMO PASO
-¿Consensuamos este plan más específico? Si sí, creo inmediatamente:
-1. Los archivos de Ronda 1
-2. Comenzamos con el análisis real de `extension.ts`
-3. Iteramos con código real, no solo propuestas
+¿Consensuamos este plan más específico? Si sí, ejecutamos en iteraciones de 1 ronda con entregables claros:
 
-**¿Procedemos?**
+Entregables por ronda:
+- Plantillas completadas (`round-{N}-*`)
+- Código/Contribuciones VS Code funcionales
+- Validaciones mínimas (build/lint/smoke)
+
+Riesgos y mitigación generales:
+- API VS Code cambia → fijar `engines.vscode` y tipados
+- Entornos Windows/Linux → rutas absolutas y shell configurable
+- Concurrencia de procesos → gestor de terminales con estado
+
+Criterios de aceptación globales:
+- Extensión activa sin errores
+- Comandos clave documentados y operativos
+- Reducción de webviews innecesarios
+
+Prácticas XP aplicadas:
+- Iteraciones cortas, feedback continuo
+- Refactor continuo con test ligeros
+- Diseño simple orientado a eventos (bajo acoplamiento)
+
+**Siguiente acción propuesta**: iniciar Ronda 1 y auditar `src/extension.ts` y `src/mcpServerManager.ts` con una primera lista de comandos mínimos.

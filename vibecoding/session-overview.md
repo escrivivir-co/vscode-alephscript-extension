@@ -47,7 +47,7 @@ Refactorizar extensión VS Code de webview-heavy a integración nativa completa 
 ## 🗂️ ARCHIVOS DE TRACKING
 - `base.md`: Plan maestro (✅ Creado)
 - `session-overview.md`: Este archivo (✅ Creado)
-- `round-{N}-*.md`: Archivos por ronda (⏳ Pendientes)
+- `round-{N}-*.md`: Archivos por ronda (✅ 1..10 creados)
 
 ## 📝 NOTAS
 - Usuario en Windows con Git Bash
@@ -57,4 +57,5 @@ Refactorizar extensión VS Code de webview-heavy a integración nativa completa 
 
 ---
 **Última actualización**: 2025-09-06 - Creación inicial del plan
-**Próxima acción**: Consenso del usuario para comenzar Ronda 1
+**Próxima acción**: Consenso del usuario para comenzar Ronda 1 (Architecture & MCP Foundation)
+**Nota XP**: Al cierre de cada ronda, actualizar métricas y refactors obligatorios pequeños.
