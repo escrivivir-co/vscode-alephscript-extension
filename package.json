@@ -1,0 +1,100 @@
+{
+  "name": "mcp-socket-gamification-manager",
+  "displayName": "MCP Socket.io Gamification Manager",
+  "description": "VS Code extension to manage MCP-Socket.io gamification ecosystem",
+  "version": "0.0.1",
+  "publisher": "mcp-gamification",
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand:mcpSocketManager.activate"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "mcpSocketManager.openConfigEditor",
+        "title": "Open Config Editor",
+        "category": "MCP Manager"
+      },
+      {
+        "command": "mcpSocketManager.startLauncher",
+        "title": "Start Launcher",
+        "category": "MCP Manager"
+      },
+      {
+        "command": "mcpSocketManager.stopLauncher",
+        "title": "Stop Launcher",
+        "category": "MCP Manager"
+      },
+      {
+        "command": "mcpSocketManager.openSocketMonitor",
+        "title": "Open Socket Monitor",
+        "category": "MCP Manager"
+      },
+      {
+        "command": "mcpSocketManager.manageUIs",
+        "title": "Manage UIs",
+        "category": "MCP Manager"
+      },
+      {
+        "command": "mcpSocketManager.manageMCPServers",
+        "title": "Manage MCP Servers",
+        "category": "MCP Manager"
+      }
+    ],
+    "views": {
+      "explorer": [
+        {
+          "id": "mcpSocketManager",
+          "name": "MCP Socket Manager",
+          "when": "resourceExtname == .json"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "mcpSocketManager",
+          "title": "MCP Socket Manager",
+          "icon": "$(server)"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "MCP Socket Manager",
+      "properties": {
+        "mcpSocketManager.configPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to the MCP configuration file"
+        },
+        "mcpSocketManager.autoStart": {
+          "type": "boolean",
+          "default": false,
+          "description": "Auto-start services when opening workspace"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.1",
+    "@types/vscode": "^1.103.0",
+    "@vscode/vsce": "^3.6.0",
+    "generator-code": "^1.11.11",
+    "typescript": "^5.9.2",
+    "yo": "^5.1.0"
+  },
+  "dependencies": {
+    "socket.io-client": "^4.8.1"
+  }
+}

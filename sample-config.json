@@ -1,0 +1,69 @@
+{
+  "app": {
+    "type": "x-plus-1"
+  },
+  "launcher": {
+    "ollamaUrl": "http://localhost:11434",
+    "requiredModel": "GPT-OSS:20b",
+    "mcpServiceLauncherPort": 3050,
+    "healthCheckTimeout": 30000,
+    "shutdownGracePeriod": 5000
+  },
+  "game": {
+    "id": "x-plus-1-demo",
+    "name": "X+1 Demo Game",
+    "description": "Demo configuration for testing the VS Code extension",
+    "mcpServerId": "state-machine-server",
+    "graphId": "x-plus-1-game",
+    "userId": "player-1",
+    "sessionId": "demo-session",
+    "agentConfigs": [
+      {
+        "id": "test-agent",
+        "name": "TestAgent",
+        "role": "narrator",
+        "description": "Test agent for demonstration",
+        "mcpServerId": "state-machine-server",
+        "autoStart": true,
+        "priority": 10
+      }
+    ]
+  },
+  "mcp": {
+    "servers": {
+      "state-machine-server": {},
+      "wiki-mcp-browser": {},
+      "devops-mcp-server": {}
+    }
+  },
+  "orchestration": {
+    "enableReplay": true,
+    "replayBufferSize": 200,
+    "enableLogging": true,
+    "enableCrossChannelRouting": true,
+    "messageTimeout": 10000
+  },
+  "ui": [
+    {
+      "id": "console-demo",
+      "name": "Demo Console UI",
+      "type": "custom",
+      "enabled": true,
+      "config": {
+        "isPrimary": true,
+        "autoStart": true,
+        "port": 8080
+      }
+    },
+    {
+      "id": "web-demo",
+      "name": "Demo Web UI",
+      "type": "html5",
+      "enabled": true,
+      "config": {
+        "port": 8081,
+        "autoStart": false
+      }
+    }
+  ]
+}
