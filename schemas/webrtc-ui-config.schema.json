@@ -1,0 +1,200 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://alephscript.dev/schemas/webrtc-ui-config.json",
+  "title": "WebRTC UI Configuration Schema",
+  "description": "Configuration schema for WebRTC-enabled gamification UI",
+  "type": "object",
+  "properties": {
+    "gamification": {
+      "type": "object",
+      "description": "Gamification settings",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable gamification features"
+        },
+        "theme": {
+          "type": "string",
+          "enum": ["aleph-default", "neon", "retro", "minimal", "dark", "light"],
+          "default": "aleph-default",
+          "description": "UI theme"
+        },
+        "animations": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable UI animations"
+        },
+        "soundEffects": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable sound effects"
+        },
+        "particles": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable particle effects"
+        }
+      },
+      "additionalProperties": false
+    },
+    "webrtc": {
+      "type": "object",
+      "description": "WebRTC configuration",
+      "properties": {
+        "iceServers": {
+          "type": "array",
+          "description": "ICE servers for WebRTC",
+          "items": {
+            "type": "object",
+            "properties": {
+              "urls": {
+                "oneOf": [
+                  {"type": "string", "format": "uri"},
+                  {"type": "array", "items": {"type": "string", "format": "uri"}}
+                ]
+              },
+              "username": {"type": "string"},
+              "credential": {"type": "string"}
+            },
+            "required": ["urls"],
+            "additionalProperties": false
+          },
+          "default": [
+            {"urls": "stun:stun.l.google.com:19302"}
+          ]
+        },
+        "constraints": {
+          "type": "object",
+          "properties": {
+            "video": {
+              "oneOf": [
+                {"type": "boolean"},
+                {
+                  "type": "object",
+                  "properties": {
+                    "width": {"type": "number", "minimum": 320, "maximum": 4096},
+                    "height": {"type": "number", "minimum": 240, "maximum": 2160},
+                    "frameRate": {"type": "number", "minimum": 15, "maximum": 60}
+                  }
+                }
+              ],
+              "default": true
+            },
+            "audio": {
+              "oneOf": [
+                {"type": "boolean"},
+                {
+                  "type": "object",
+                  "properties": {
+                    "sampleRate": {"type": "number"},
+                    "echoCancellation": {"type": "boolean", "default": true},
+                    "noiseSuppression": {"type": "boolean", "default": true}
+                  }
+                }
+              ],
+              "default": true
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "ui": {
+      "type": "object",
+      "description": "UI layout and component configuration",
+      "properties": {
+        "layout": {
+          "type": "string",
+          "enum": ["grid", "flex", "masonry", "auto"],
+          "default": "grid",
+          "description": "UI layout mode"
+        },
+        "components": {
+          "type": "array",
+          "description": "Enabled UI components",
+          "items": {
+            "type": "string",
+            "enum": ["video", "chat", "controls", "status", "logs", "debug", "leaderboard", "achievements"]
+          },
+          "uniqueItems": true,
+          "default": ["video", "chat", "controls"]
+        },
+        "responsive": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable responsive design"
+        },
+        "maxVideoStreams": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 25,
+          "default": 9,
+          "description": "Maximum simultaneous video streams"
+        }
+      },
+      "additionalProperties": false
+    },
+    "performance": {
+      "type": "object",
+      "description": "Performance optimization settings",
+      "properties": {
+        "enableHardwareAcceleration": {
+          "type": "boolean",
+          "default": true,
+          "description": "Use hardware acceleration when available"
+        },
+        "adaptiveBitrate": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable adaptive bitrate"
+        },
+        "maxBitrate": {
+          "type": "number",
+          "minimum": 64,
+          "maximum": 8000,
+          "default": 2000,
+          "description": "Maximum bitrate in kbps"
+        },
+        "lowPowerMode": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable low power mode for battery saving"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": [],
+  "additionalProperties": false,
+  "examples": [
+    {
+      "gamification": {
+        "enabled": true,
+        "theme": "aleph-default",
+        "animations": true,
+        "particles": true
+      },
+      "webrtc": {
+        "iceServers": [
+          {"urls": "stun:stun.l.google.com:19302"}
+        ],
+        "constraints": {
+          "video": {"width": 1280, "height": 720, "frameRate": 30},
+          "audio": {"echoCancellation": true, "noiseSuppression": true}
+        }
+      },
+      "ui": {
+        "layout": "grid",
+        "components": ["video", "chat", "controls", "status"],
+        "maxVideoStreams": 9
+      },
+      "performance": {
+        "enableHardwareAcceleration": true,
+        "adaptiveBitrate": true,
+        "maxBitrate": 2000
+      }
+    }
+  ]
+}

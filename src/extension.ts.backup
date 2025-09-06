@@ -1,0 +1,519 @@
+import * as vscode from 'vscode';
+import { ExtensionBootstrap } from './core/extensionBootstrap';
+import { LoggingManager, createLogger, LogCategory } from './loggingManager';
+
+// Global extension bootstrap instance
+let extensionBootstrap: ExtensionBootstrap | undefined;
+
+/**
+ * VS Code extension activation function
+ */
+import * as vscode from 'vscode';
+import { ExtensionBootstrap } from './core/extensionBootstrap';
+
+// Global extension bootstrap instance
+let extensionBootstrap: ExtensionBootstrap | undefined;
+
+/**
+ * VS Code extension activation function
+ */
+export async function activate(context: vscode.ExtensionContext): Promise<void> {
+    console.log('AlephScript Extension is activating...');
+    
+    try {
+        // Initialize extension bootstrap using getInstance
+        extensionBootstrap = ExtensionBootstrap.getInstance();
+        
+        // Initialize with VS Code context
+        await extensionBootstrap.initialize(context);
+        
+        console.log('AlephScript Extension activated successfully!');
+        
+    } catch (error) {
+        console.error('Failed to activate AlephScript Extension:', error);
+        vscode.window.showErrorMessage(`Failed to activate AlephScript Extension: ${error}`);
+        throw error;
+    }
+}
+
+/**
+ * VS Code extension deactivation function
+ */
+export async function deactivate(): Promise<void> {
+    console.log('AlephScript Extension is deactivating...');
+    
+    try {
+        if (extensionBootstrap) {
+            await extensionBootstrap.dispose();
+            extensionBootstrap = undefined;
+        }
+        
+        console.log('AlephScript Extension deactivated successfully!');
+        
+    } catch (error) {
+        console.error('Error during extension deactivation:', error);
+        throw error;
+    }
+}
+
+/**
+ * VS Code extension deactivation function
+ */
+export async function deactivate(): Promise<void> {
+    console.log('AlephScript Extension is deactivating...');
+    
+    try {
+        if (extensionBootstrap) {
+            await extensionBootstrap.deactivate();
+            extensionBootstrap = undefined;
+        }
+        
+        console.log('AlephScript Extension deactivated successfully!');
+        
+    } catch (error) {
+        console.error('Error during extension deactivation:', error);
+        throw error;
+    }
+}
+        vscode.commands.registerCommand('alephscript.agents.refresh', () => agentsTreeProvider.refresh()),
+        vscode.commands.registerCommand('alephscript.uis.refresh', () => uisTreeProvider.refresh()),
+        vscode.commands.registerCommand('alephscript.configs.refresh', () => configsTreeProvider.refresh()),
+        vscode.commands.registerCommand('alephscript.sockets.refresh', () => socketsTreeProvider.refresh()),
+
+        // Socket.IO commands
+        vscode.commands.registerCommand('alephscript.sockets.connect', async () => {
+            try {
+                const url = await vscode.window.showInputBox({
+                    prompt: 'Enter Socket.IO server URL',
+                    value: 'ws://localhost:3000',
+                    placeHolder: 'ws://localhost:3000'
+                });
+                if (url) {
+                    await socketsTreeProvider.connectToServer(url);
+                    socketsTreeProvider.refresh();
+                    await statusManager.updateStatus();
+                }
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to connect: ${error}`);
+            }
+        }),
+
+        vscode.commands.registerCommand('alephscript.sockets.disconnect', async () => {
+            try {
+                await socketsTreeProvider.disconnectFromServer();
+                socketsTreeProvider.refresh();
+                await statusManager.updateStatus();
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to disconnect: ${error}`);
+            }
+        }),
+
+        vscode.commands.registerCommand('alephscript.sockets.joinRoom', async (item) => {
+            try {
+                let roomName: string;
+                if (item?.roomName) {
+                    roomName = item.roomName;
+                } else {
+                    const input = await vscode.window.showInputBox({
+                        prompt: 'Enter room name to join',
+                        placeHolder: 'Application'
+                    });
+                    if (!input) return;
+                    roomName = input;
+                }
+                
+                await socketsTreeProvider.joinRoom(roomName);
+                socketsTreeProvider.refresh();
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to join room: ${error}`);
+            }
+        }),
+
+        vscode.commands.registerCommand('alephscript.sockets.leaveRoom', async (item) => {
+            try {
+                if (item?.roomName) {
+                    await socketsTreeProvider.leaveRoom(item.roomName);
+                    socketsTreeProvider.refresh();
+                }
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to leave room: ${error}`);
+            }
+        }),
+
+        vscode.commands.registerCommand('alephscript.sockets.sendMessage', async (item) => {
+            try {
+                if (!item?.roomName) {
+                    vscode.window.showWarningMessage('Select a room to send message to');
+                    return;
+                }
+                
+                const message = await vscode.window.showInputBox({
+                    prompt: `Send message to room: ${item.roomName}`,
+                    placeHolder: 'Enter message content'
+                });
+                
+                if (message) {
+                    await socketsTreeProvider.sendTestMessage(item.roomName);
+                }
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to send message: ${error}`);
+            }
+        }),
+
+        // Configuration Management commands
+        vscode.commands.registerCommand('alephscript.configs.openInEditor', async (uri, configType) => {
+            try {
+                await vscode.window.showTextDocument(uri);
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to open configuration: ${error}`);
+            }
+        }),
+
+        vscode.commands.registerCommand('alephscript.configs.validate', async (item) => {
+            try {
+                if (item?.resourceUri) {
+                    await configsTreeProvider.validateConfiguration(item.resourceUri.fsPath);
+                }
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to validate configuration: ${error}`);
+            }
+        }),
+
+        vscode.commands.registerCommand('alephscript.configs.format', async (item) => {
+            try {
+                if (item?.resourceUri) {
+                    await configsTreeProvider.formatConfiguration(item.resourceUri.fsPath);
+                    configsTreeProvider.refresh();
+                }
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to format configuration: ${error}`);
+            }
+        }),
+
+        vscode.commands.registerCommand('alephscript.configs.backup', async (item) => {
+            try {
+                if (item?.resourceUri) {
+                    await configsTreeProvider.createBackup(item.resourceUri.fsPath);
+                }
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to create backup: ${error}`);
+            }
+        }),
+
+        vscode.commands.registerCommand('alephscript.configs.createTemplate', async () => {
+            try {
+                const templateType = await vscode.window.showQuickPick([
+                    { label: 'XPlus1 Configuration', value: 'xplus1' as const },
+                    { label: 'Socket.IO Configuration', value: 'socket' as const },
+                    { label: 'WebRTC UI Configuration', value: 'ui' as const }
+                ], {
+                    placeHolder: 'Select configuration template to create'
+                });
+
+                if (templateType) {
+                    await configsTreeProvider.createFromTemplate(templateType.value);
+                    configsTreeProvider.refresh();
+                }
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to create template: ${error}`);
+            }
+        }),
+
+        vscode.commands.registerCommand('alephscript.configs.reload', async (item) => {
+            try {
+                if (item?.resourceUri) {
+                    await configsTreeProvider.reloadConfiguration(item.resourceUri.fsPath);
+                }
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to reload configuration: ${error}`);
+            }
+        }),
+
+        // Logging commands
+        vscode.commands.registerCommand('alephscript.logs.refresh', () => logsTreeProvider.refresh()),
+        vscode.commands.registerCommand('alephscript.logs.clear', () => logsTreeProvider.clearLogs()),
+        vscode.commands.registerCommand('alephscript.logs.export', () => logsTreeProvider.exportLogs()),
+        vscode.commands.registerCommand('alephscript.logs.showEntry', (entry) => logsTreeProvider.showLogEntry(entry)),
+        vscode.commands.registerCommand('alephscript.logs.toggleAutoRefresh', () => {
+            logsTreeProvider.toggleAutoRefresh();
+            const status = logsTreeProvider.getAutoRefreshStatus() ? 'enabled' : 'disabled';
+            vscode.window.showInformationMessage(`Auto-refresh ${status}`);
+        }),
+        vscode.commands.registerCommand('alephscript.logs.toggleGroupByCategory', () => {
+            logsTreeProvider.toggleGroupByCategory();
+            const status = logsTreeProvider.getGroupByCategoryStatus() ? 'enabled' : 'disabled';
+            vscode.window.showInformationMessage(`Group by category ${status}`);
+        }),
+        vscode.commands.registerCommand('alephscript.logs.toggleErrorsOnly', () => {
+            logsTreeProvider.toggleErrorsOnly();
+            const status = logsTreeProvider.getErrorsOnlyStatus() ? 'enabled' : 'disabled';
+            vscode.window.showInformationMessage(`Show errors only ${status}`);
+        }),
+        vscode.commands.registerCommand('alephscript.logs.setLogLevel', async () => {
+            const levels = ['Error', 'Warning', 'Info', 'Debug', 'Trace'];
+            const selected = await vscode.window.showQuickPick(levels, {
+                placeHolder: 'Select log level'
+            });
+            if (selected) {
+                const levelMap: { [key: string]: LogLevel } = {
+                    'Error': LogLevel.ERROR,
+                    'Warning': LogLevel.WARN,
+                    'Info': LogLevel.INFO,
+                    'Debug': LogLevel.DEBUG,
+                    'Trace': LogLevel.TRACE
+                };
+                loggingManager.setLogLevel(levelMap[selected]);
+                vscode.window.showInformationMessage(`Log level set to ${selected}`);
+            }
+        }),
+        vscode.commands.registerCommand('alephscript.logs.showChannel', async (category) => {
+            if (category) {
+                loggingManager.showChannel(category);
+            } else {
+                const categories = ['main', ...Object.values(LogCategory)];
+                const selected = await vscode.window.showQuickPick(categories, {
+                    placeHolder: 'Select log channel to show'
+                });
+                if (selected) {
+                    loggingManager.showChannel(selected as LogCategory | 'main');
+                }
+            }
+        }),
+
+        // Command Palette information
+        vscode.commands.registerCommand('alephscript.showCommandInfo', async () => {
+            const commandInfo = commandPaletteManager.generateCommandPaletteInfo();
+            const doc = await vscode.workspace.openTextDocument({
+                content: commandInfo,
+                language: 'markdown'
+            });
+            vscode.window.showTextDocument(doc, { preview: true });
+        }),
+
+        // TreeView action commands - Agents
+        vscode.commands.registerCommand('alephscript.agents.start', async (item) => {
+            try {
+                if (item?.id === 'state-machine-server') {
+                    await terminalManager.startMCPDriver();
+                } else {
+                    vscode.window.showInformationMessage(`Starting ${item?.label || 'agent'}...`);
+                }
+                agentsTreeProvider.refresh();
+                // Trigger status update after action
+                await statusManager.updateStatus();
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to start agent: ${error}`);
+            }
+        }),
+        
+        vscode.commands.registerCommand('alephscript.agents.stop', async (item) => {
+            try {
+                terminalManager.stopTerminal(item?.id || 'unknown');
+                vscode.window.showInformationMessage(`Stopped ${item?.label || 'agent'}`);
+                agentsTreeProvider.refresh();
+                await statusManager.updateStatus();
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to stop agent: ${error}`);
+            }
+        }),
+
+        // TreeView action commands - UIs
+        vscode.commands.registerCommand('alephscript.uis.start', async (item) => {
+            try {
+                if (item?.type && item?.id) {
+                    await terminalManager.startUIProcess(item.id, item.type, item.port);
+                    vscode.window.showInformationMessage(`Started ${item.label}`);
+                    uisTreeProvider.refresh();
+                    await statusManager.updateStatus();
+                }
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to start UI: ${error}`);
+            }
+        }),
+        
+        vscode.commands.registerCommand('alephscript.uis.stop', async (item) => {
+            try {
+                terminalManager.stopTerminal(`ui-${item?.id}`);
+                vscode.window.showInformationMessage(`Stopped ${item?.label || 'UI'}`);
+                uisTreeProvider.refresh();
+                await statusManager.updateStatus();
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to stop UI: ${error}`);
+            }
+        }),
+
+        vscode.commands.registerCommand('alephscript.uis.openBrowser', async (item) => {
+            if (item?.port) {
+                const url = `http://localhost:${item.port}`;
+                vscode.env.openExternal(vscode.Uri.parse(url));
+            } else {
+                vscode.window.showWarningMessage('No port configured for this UI');
+            }
+        }),
+
+        vscode.commands.registerCommand('mcpSocketManager.openConfigEditor', () => {
+            configEditorProvider.createOrShowPanel();
+        }),
+        
+        vscode.commands.registerCommand('mcpSocketManager.startLauncher', async () => {
+            try {
+                const config = vscode.workspace.getConfiguration('mcpSocketManager');
+                const configPath = config.get<string>('configPath');
+                
+                if (!configPath) {
+                    const result = await vscode.window.showOpenDialog({
+                        canSelectFiles: true,
+                        canSelectFolders: false,
+                        canSelectMany: false,
+                        filters: {
+                            'JSON files': ['json']
+                        }
+                    });
+                    
+                    if (result && result[0]) {
+                        await config.update('configPath', result[0].fsPath, vscode.ConfigurationTarget.Workspace);
+                        await processManager.startLauncher(result[0].fsPath);
+                    }
+                } else {
+                    await processManager.startLauncher(configPath);
+                }
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to start launcher: ${error}`);
+            }
+        }),
+        
+        vscode.commands.registerCommand('mcpSocketManager.stopLauncher', async () => {
+            try {
+                await processManager.stopLauncher();
+                vscode.window.showInformationMessage('Launcher stopped successfully');
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to stop launcher: ${error}`);
+            }
+        }),
+        
+        vscode.commands.registerCommand('mcpSocketManager.openSocketMonitor', () => {
+            socketMonitor.createOrShowPanel(context.extensionUri);
+        }),
+        
+        vscode.commands.registerCommand('mcpSocketManager.manageUIs', () => {
+            uiManager.showUIManager();
+        }),
+        
+        vscode.commands.registerCommand('mcpSocketManager.manageMCPServers', () => {
+            mcpServerManager.showMCPManager();
+        }),
+
+        // WebView commands
+        vscode.commands.registerCommand('alephscript.webview.showDashboard', () => {
+            // Create a simple dashboard without the helper function for now
+            const panel = vscode.window.createWebviewPanel(
+                'webview-dashboard',
+                'WebView Dashboard',
+                vscode.ViewColumn.One,
+                { enableScripts: true }
+            );
+            panel.webview.html = '<h1>WebView Dashboard</h1><p>WebView management coming soon...</p>';
+        }),
+
+        vscode.commands.registerCommand('alephscript.webview.openWebRTC', async () => {
+            try {
+                const config = webViewManager.getWebRTCConfig();
+                const webview = await webViewManager.createWebView(config);
+                if (webview) {
+                    vscode.window.showInformationMessage('WebRTC UI opened successfully');
+                } else {
+                    vscode.window.showErrorMessage('Failed to open WebRTC UI');
+                }
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to open WebRTC UI: ${error}`);
+            }
+        }),
+
+        vscode.commands.registerCommand('alephscript.webview.openThreeJS', async () => {
+            try {
+                const config = webViewManager.getThreeJSConfig();
+                const webview = await webViewManager.createWebView(config);
+                if (webview) {
+                    vscode.window.showInformationMessage('ThreeJS UI opened successfully');
+                } else {
+                    vscode.window.showErrorMessage('Failed to open ThreeJS UI');
+                }
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to open ThreeJS UI: ${error}`);
+            }
+        }),
+
+        vscode.commands.registerCommand('alephscript.webview.openSocket', async () => {
+            try {
+                const config = webViewManager.getSocketWebAppConfig();
+                const webview = await webViewManager.createWebView(config);
+                if (webview) {
+                    vscode.window.showInformationMessage('Socket WebApp opened successfully');
+                } else {
+                    vscode.window.showErrorMessage('Failed to open Socket WebApp');
+                }
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to open Socket WebApp: ${error}`);
+            }
+        }),
+
+        vscode.commands.registerCommand('alephscript.webview.openDriver', async () => {
+            try {
+                const config = webViewManager.getDriverUIConfig();
+                const webview = await webViewManager.createWebView(config);
+                if (webview) {
+                    vscode.window.showInformationMessage('Driver UI opened successfully');
+                } else {
+                    vscode.window.showErrorMessage('Failed to open Driver UI');
+                }
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to open Driver UI: ${error}`);
+            }
+        }),
+
+        vscode.commands.registerCommand('alephscript.webview.reloadAll', async () => {
+            const webviews = webViewManager.getAllWebViews();
+            const reloadPromises = webviews.map((w: any) => webViewManager.reloadWebView(w.id));
+            const results = await Promise.all(reloadPromises);
+            const successCount = results.filter((r: any) => r).length;
+            vscode.window.showInformationMessage(`Reloaded ${successCount} of ${webviews.length} webviews`);
+        })
+    ];
+
+    context.subscriptions.push(
+        ...commands,
+        agentsTreeView,
+        uisTreeView,
+        configsTreeView,
+        socketsTreeView,
+        logsTreeView
+    );
+
+    extensionLogger.info('AlephScript extension activation completed');
+
+    // Auto-start if configured
+    const config = vscode.workspace.getConfiguration('mcpSocketManager');
+    if (config.get<boolean>('autoStart')) {
+        const configPath = config.get<string>('configPath');
+        if (configPath) {
+            processManager.startLauncher(configPath);
+        }
+    }
+}
+
+export function deactivate() {
+    console.log('MCP Socket Gamification Manager extension is being deactivated');
+    const extensionLogger = createLogger(LogCategory.EXTENSION, 'ExtensionDeactivation');
+    extensionLogger.info('AlephScript extension deactivation started');
+    
+    try {
+        globalCommandPaletteManager?.dispose();
+        globalWebViewManager?.dispose();
+        globalStatusManager?.dispose();
+        globalTerminalManager?.dispose();
+        globalProcessManager?.dispose();
+        globalLoggingManager?.dispose();
+        
+        extensionLogger.info('AlephScript extension deactivated successfully');
+    } catch {}
+}

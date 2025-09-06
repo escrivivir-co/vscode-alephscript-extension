@@ -1,0 +1,100 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://alephscript.dev/schemas/socket-config.json",
+  "title": "Socket.IO Configuration Schema",
+  "description": "Configuration schema for Socket.IO server settings",
+  "type": "object",
+  "properties": {
+    "url": {
+      "type": "string",
+      "format": "uri",
+      "pattern": "^wss?://",
+      "description": "Socket.IO server URL"
+    },
+    "port": {
+      "type": "number",
+      "minimum": 1000,
+      "maximum": 65535,
+      "default": 3000,
+      "description": "Socket.IO server port"
+    },
+    "rooms": {
+      "type": "object",
+      "description": "Room configurations",
+      "patternProperties": {
+        "^[A-Za-z][A-Za-z0-9_]*$": {
+          "type": "object",
+          "properties": {
+            "maxClients": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 50,
+              "description": "Maximum clients per room"
+            },
+            "persistent": {
+              "type": "boolean",
+              "default": false,
+              "description": "Keep room alive when empty"
+            },
+            "authentication": {
+              "type": "boolean",
+              "default": false,
+              "description": "Require authentication to join"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "options": {
+      "type": "object",
+      "description": "Socket.IO server options",
+      "properties": {
+        "transports": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["websocket", "polling"]
+          },
+          "default": ["websocket", "polling"]
+        },
+        "pingTimeout": {
+          "type": "number",
+          "minimum": 1000,
+          "maximum": 60000,
+          "default": 60000,
+          "description": "Ping timeout in milliseconds"
+        },
+        "pingInterval": {
+          "type": "number", 
+          "minimum": 1000,
+          "maximum": 30000,
+          "default": 25000,
+          "description": "Ping interval in milliseconds"
+        },
+        "cors": {
+          "type": "object",
+          "properties": {
+            "origin": {
+              "oneOf": [
+                {"type": "string"},
+                {"type": "array", "items": {"type": "string"}}
+              ],
+              "default": "*"
+            },
+            "credentials": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": ["url"],
+  "additionalProperties": false
+}

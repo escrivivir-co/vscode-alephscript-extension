@@ -12,11 +12,27 @@ export interface SocketMessage {
     target?: string;
 }
 
+export interface SocketRoomInfo {
+    name: string;
+    clientCount: number;
+    isJoined: boolean;
+}
+
 export class SocketMonitor {
     private panel: vscode.WebviewPanel | undefined;
     private socket: Socket | undefined;
     private messages: SocketMessage[] = [];
     private isConnected = false;
+    private rooms: Map<string, SocketRoomInfo> = new Map();
+    
+    // Event emitters for TreeView integration
+    private _onConnectionChange: vscode.EventEmitter<boolean> = new vscode.EventEmitter<boolean>();
+    private _onRoomsChange: vscode.EventEmitter<Map<string, SocketRoomInfo>> = new vscode.EventEmitter<Map<string, SocketRoomInfo>>();
+    private _onMessageReceived: vscode.EventEmitter<SocketMessage> = new vscode.EventEmitter<SocketMessage>();
+
+    public readonly onConnectionChange: vscode.Event<boolean> = this._onConnectionChange.event;
+    public readonly onRoomsChange: vscode.Event<Map<string, SocketRoomInfo>> = this._onRoomsChange.event;
+    public readonly onMessageReceived: vscode.Event<SocketMessage> = this._onMessageReceived.event;
 
     public createOrShowPanel(extensionUri: vscode.Uri) {
         if (this.panel) {
@@ -557,5 +573,73 @@ export class SocketMonitor {
             </script>
         </body>
         </html>`;
+    }
+
+    // Public methods for TreeView integration
+    public getConnectionStatus(): boolean {
+        return this.isConnected;
+    }
+
+    public getRooms(): Map<string, SocketRoomInfo> {
+        return this.rooms;
+    }
+
+    public getRecentMessages(count: number = 10): SocketMessage[] {
+        return this.messages.slice(0, count);
+    }
+
+    public async connectToSocket(url: string = 'ws://localhost:3000'): Promise<boolean> {
+        // Use existing connect logic but return Promise
+        return new Promise((resolve, reject) => {
+            try {
+                this.connect(url);
+                // Monitor connection state
+                const checkConnection = setInterval(() => {
+                    if (this.isConnected) {
+                        clearInterval(checkConnection);
+                        this._onConnectionChange.fire(true);
+                        resolve(true);
+                    }
+                }, 100);
+                
+                setTimeout(() => {
+                    clearInterval(checkConnection);
+                    if (!this.isConnected) {
+                        reject(new Error('Connection timeout'));
+                    }
+                }, 5000);
+            } catch (error) {
+                reject(error);
+            }
+        });
+    }
+
+    public disconnectFromSocket(): void {
+        this.disconnect();
+        this.rooms.clear();
+        this._onConnectionChange.fire(false);
+        this._onRoomsChange.fire(this.rooms);
+    }
+
+    public joinSocketRoom(roomName: string): void {
+        this.joinRoom(roomName);
+        // Update room info
+        const roomInfo: SocketRoomInfo = {
+            name: roomName,
+            clientCount: 1,
+            isJoined: true
+        };
+        this.rooms.set(roomName, roomInfo);
+        this._onRoomsChange.fire(this.rooms);
+    }
+
+    public leaveSocketRoom(roomName: string): void {
+        this.leaveRoom(roomName);
+        this.rooms.delete(roomName);
+        this._onRoomsChange.fire(this.rooms);
+    }
+
+    public sendSocketMessage(roomName: string, eventType: string, data: any): void {
+        this.sendMessage(roomName, eventType, data);
     }
 }

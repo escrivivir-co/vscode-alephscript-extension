@@ -8,12 +8,21 @@
             "DOM"
         ],
         "sourceMap": true,
-        "rootDir": "src",
+        "rootDir": ".",
         "strict": true,
-        "skipLibCheck": true
+        "skipLibCheck": true,
+        "esModuleInterop": true,
+        "allowSyntheticDefaultImports": true,
+        "resolveJsonModule": true,
+        "types": ["jest", "node", "vscode"]
     },
+    "include": [
+        "src/**/*",
+        "tests/**/*"
+    ],
     "exclude": [
         "node_modules",
-        ".vscode-test"
+        ".vscode-test",
+        "out"
     ]
 }

@@ -1,212 +1,181 @@
 import * as vscode from 'vscode';
-import { spawn, ChildProcess } from 'child_process';
+import * as cp from 'child_process';
 import * as path from 'path';
 
 export interface ProcessInfo {
-    id: string;
+    id?: string;
     name: string;
-    process: ChildProcess;
-    status: 'running' | 'stopped' | 'error';
+    pid: number;
+    command: string;
+    status: 'running' | 'stopped' | 'unknown';
     port?: number;
-    logs: string[];
+    workingDirectory: string;
+    startTime?: Date;
 }
 
 export class ProcessManager {
-    private processes: Map<string, ProcessInfo> = new Map();
-    private outputChannel: vscode.OutputChannel;
+    private static instance: ProcessManager;
+    private processes: Map<string, cp.ChildProcess> = new Map();
+    private processInfo: Map<string, ProcessInfo> = new Map();
 
-    constructor() {
-        this.outputChannel = vscode.window.createOutputChannel('MCP Socket Manager');
+    private constructor() {}
+
+    static getInstance(): ProcessManager {
+        if (!ProcessManager.instance) {
+            ProcessManager.instance = new ProcessManager();
+        }
+        return ProcessManager.instance;
     }
 
-    public async startLauncher(configPath: string): Promise<void> {
+    async startProcess(name: string, command: string, args: string[], workingDir: string, port?: number): Promise<boolean> {
         try {
-            this.log(`Starting launcher with config: ${configPath}`);
-            
-            const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-            if (!workspaceFolder) {
-                throw new Error('No workspace folder found');
+            if (this.processes.has(name)) {
+                console.log(`Process ${name} is already running`);
+                return false;
             }
 
-            const cwd = workspaceFolder.uri.fsPath;
-            
-            // Try different launch methods based on what's available
-            let command = 'npx';
-            let args = ['tsx', 'xplus1-app.ts', configPath];
-            
-            // Check if we have a package.json with scripts
-            try {
-                const packageJson = require(path.join(cwd, 'package.json'));
-                if (packageJson.scripts && packageJson.scripts['start:launcher']) {
-                    command = 'npm';
-                    args = ['run', 'start:launcher', configPath];
-                }
-            } catch (e) {
-                // No package.json or no start script, use npx tsx
-            }
-
-            const launcherProcess = spawn(command, args, {
-                cwd: cwd,
-                stdio: ['pipe', 'pipe', 'pipe'],
+            const process = cp.spawn(command, args, {
+                cwd: workingDir,
                 shell: true
             });
 
-            const processInfo: ProcessInfo = {
-                id: 'launcher',
-                name: 'X+1 Launcher',
-                process: launcherProcess,
-                status: 'running',
-                logs: []
-            };
+            if (process.pid) {
+                this.processes.set(name, process);
+                this.processInfo.set(name, {
+                    id: name,
+                    name,
+                    pid: process.pid,
+                    command: `${command} ${args.join(' ')}`,
+                    status: 'running',
+                    port,
+                    workingDirectory: workingDir,
+                    startTime: new Date()
+                });
 
-            this.processes.set('launcher', processInfo);
+                process.on('exit', (code) => {
+                    console.log(`Process ${name} exited with code ${code}`);
+                    this.processes.delete(name);
+                    if (this.processInfo.has(name)) {
+                        const info = this.processInfo.get(name)!;
+                        info.status = 'stopped';
+                        this.processInfo.set(name, info);
+                    }
+                });
 
-            launcherProcess.stdout?.on('data', (data) => {
-                const message = data.toString();
-                this.log(`[Launcher] ${message}`);
-                processInfo.logs.push(message);
-            });
+                console.log(`Process ${name} started with PID ${process.pid}`);
+                return true;
+            }
 
-            launcherProcess.stderr?.on('data', (data) => {
-                const message = data.toString();
-                this.log(`[Launcher Error] ${message}`);
-                processInfo.logs.push(`ERROR: ${message}`);
-            });
-
-            launcherProcess.on('close', (code) => {
-                processInfo.status = code === 0 ? 'stopped' : 'error';
-                this.log(`[Launcher] Process exited with code ${code}`);
-                
-                if (code !== 0) {
-                    vscode.window.showErrorMessage(`Launcher exited with code ${code}`);
-                }
-            });
-
-            launcherProcess.on('error', (error) => {
-                processInfo.status = 'error';
-                this.log(`[Launcher] Process error: ${error.message}`);
-                vscode.window.showErrorMessage(`Launcher error: ${error.message}`);
-            });
-
-            vscode.window.showInformationMessage('Launcher started successfully');
-
+            return false;
         } catch (error) {
-            this.log(`Failed to start launcher: ${error}`);
-            throw error;
+            console.error(`Failed to start process ${name}:`, error);
+            return false;
         }
     }
 
-    public async stopLauncher(): Promise<void> {
-        const processInfo = this.processes.get('launcher');
-        if (processInfo && processInfo.status === 'running') {
-            processInfo.process.kill('SIGTERM');
-            processInfo.status = 'stopped';
-            this.processes.delete('launcher');
-            this.log('Launcher stopped');
-        }
-    }
-
-    public async startMCPServer(serverId: string, port: number): Promise<void> {
+    async stopProcess(name: string): Promise<boolean> {
         try {
-            this.log(`Starting MCP server: ${serverId} on port ${port}`);
-            
-            const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-            if (!workspaceFolder) {
-                throw new Error('No workspace folder found');
+            const process = this.processes.get(name);
+            if (process && !process.killed) {
+                process.kill('SIGTERM');
+                this.processes.delete(name);
+                
+                if (this.processInfo.has(name)) {
+                    const info = this.processInfo.get(name)!;
+                    info.status = 'stopped';
+                    this.processInfo.set(name, info);
+                }
+                
+                console.log(`Process ${name} stopped`);
+                return true;
             }
-
-            const cwd = workspaceFolder.uri.fsPath;
-            
-            // Common MCP server start patterns
-            let command = 'npm';
-            let args = ['run', `mcp:${serverId}`];
-            
-            const mcpProcess = spawn(command, args, {
-                cwd: cwd,
-                stdio: ['pipe', 'pipe', 'pipe'],
-                shell: true,
-                env: { ...process.env, PORT: port.toString() }
-            });
-
-            const processInfo: ProcessInfo = {
-                id: serverId,
-                name: `MCP Server: ${serverId}`,
-                process: mcpProcess,
-                status: 'running',
-                port: port,
-                logs: []
-            };
-
-            this.processes.set(serverId, processInfo);
-
-            mcpProcess.stdout?.on('data', (data) => {
-                const message = data.toString();
-                this.log(`[${serverId}] ${message}`);
-                processInfo.logs.push(message);
-            });
-
-            mcpProcess.stderr?.on('data', (data) => {
-                const message = data.toString();
-                this.log(`[${serverId} Error] ${message}`);
-                processInfo.logs.push(`ERROR: ${message}`);
-            });
-
-            mcpProcess.on('close', (code) => {
-                processInfo.status = code === 0 ? 'stopped' : 'error';
-                this.log(`[${serverId}] Process exited with code ${code}`);
-            });
-
-            mcpProcess.on('error', (error) => {
-                processInfo.status = 'error';
-                this.log(`[${serverId}] Process error: ${error.message}`);
-            });
-
+            return false;
         } catch (error) {
-            this.log(`Failed to start MCP server ${serverId}: ${error}`);
-            throw error;
+            console.error(`Failed to stop process ${name}:`, error);
+            return false;
         }
     }
 
-    public async stopMCPServer(serverId: string): Promise<void> {
-        const processInfo = this.processes.get(serverId);
-        if (processInfo && processInfo.status === 'running') {
-            processInfo.process.kill('SIGTERM');
-            processInfo.status = 'stopped';
-            this.processes.delete(serverId);
-            this.log(`MCP server ${serverId} stopped`);
-        }
+    getProcessInfo(name: string): ProcessInfo | undefined {
+        return this.processInfo.get(name);
     }
 
-    public getProcesses(): ProcessInfo[] {
-        return Array.from(this.processes.values());
+    getAllProcesses(): ProcessInfo[] {
+        return Array.from(this.processInfo.values());
     }
 
-    public getProcess(id: string): ProcessInfo | undefined {
-        return this.processes.get(id);
+    isProcessRunning(name: string): boolean {
+        const process = this.processes.get(name);
+        return process !== undefined && !process.killed;
     }
 
-    public showProcessLogs(id: string): void {
-        const processInfo = this.processes.get(id);
+    async killAllProcesses(): Promise<void> {
+        const promises = Array.from(this.processes.keys()).map(name => this.stopProcess(name));
+        await Promise.all(promises);
+    }
+
+    getRunningProcessesCount(): number {
+        return Array.from(this.processInfo.values())
+            .filter(info => info.status === 'running').length;
+    }
+
+    async getPortStatus(port: number): Promise<boolean> {
+        // Simple implementation - could be enhanced with actual port checking
+        return Array.from(this.processInfo.values())
+            .some(info => info.port === port && info.status === 'running');
+    }
+
+    // Launcher-specific methods
+    async startLauncher(configPath: string): Promise<boolean> {
+        const workingDir = path.dirname(configPath);
+        return await this.startProcess('launcher', 'node', ['launcher.js', configPath], workingDir, 3050);
+    }
+
+    async stopLauncher(): Promise<boolean> {
+        return await this.stopProcess('launcher');
+    }
+
+    // MCP Server methods
+    async startMCPServer(serverId: string, port: number): Promise<boolean> {
+        const workingDir = path.join(__dirname, '..', '..', 'mcp-servers', serverId);
+        return await this.startProcess(serverId, 'node', ['index.js'], workingDir, port);
+    }
+
+    async stopMCPServer(serverId: string): Promise<boolean> {
+        return await this.stopProcess(serverId);
+    }
+
+    // UI-specific methods (reusing MCP server logic for now)
+    async startUI(uiId: string, port: number): Promise<boolean> {
+        const workingDir = path.join(__dirname, '..', '..', 'ui-servers', uiId);
+        return await this.startProcess(uiId, 'node', ['server.js'], workingDir, port);
+    }
+
+    async stopUI(uiId: string): Promise<boolean> {
+        return await this.stopProcess(uiId);
+    }
+
+    // Process information methods
+    getProcess(processId: string): ProcessInfo | undefined {
+        return this.getProcessInfo(processId);
+    }
+
+    getProcesses(): ProcessInfo[] {
+        return this.getAllProcesses();
+    }
+
+    // Show process logs (placeholder - could be enhanced)
+    showProcessLogs(processId: string): void {
+        const processInfo = this.getProcessInfo(processId);
         if (processInfo) {
-            this.outputChannel.clear();
-            this.outputChannel.appendLine(`=== Logs for ${processInfo.name} ===`);
-            processInfo.logs.forEach(log => this.outputChannel.appendLine(log));
-            this.outputChannel.show();
+            console.log(`Logs for process ${processId}:`, processInfo);
         }
     }
 
-    private log(message: string): void {
-        this.outputChannel.appendLine(`[${new Date().toISOString()}] ${message}`);
-    }
-
-    public dispose(): void {
-        // Stop all processes
-        for (const [id, processInfo] of this.processes) {
-            if (processInfo.status === 'running') {
-                processInfo.process.kill('SIGTERM');
-            }
-        }
+    // Dispose method for cleanup
+    dispose(): void {
+        this.killAllProcesses();
         this.processes.clear();
-        this.outputChannel.dispose();
+        this.processInfo.clear();
     }
 }

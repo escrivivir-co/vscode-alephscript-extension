@@ -1,87 +1,47 @@
 import * as vscode from 'vscode';
-import { ConfigEditorProvider } from './configEditor';
-import { ProcessManager } from './processManager';
-import { SocketMonitor } from './socketMonitor';
-import { UIManager } from './uiManager';
-import { MCPServerManager } from './mcpServerManager';
+import { ExtensionBootstrap } from './core/extensionBootstrap';
 
-export function activate(context: vscode.ExtensionContext) {
-    console.log('MCP Socket Gamification Manager extension is now active!');
+// Global extension bootstrap instance
+let extensionBootstrap: ExtensionBootstrap | undefined;
 
-    // Initialize managers
-    const processManager = new ProcessManager();
-    const socketMonitor = new SocketMonitor();
-    const uiManager = new UIManager(processManager);
-    const mcpServerManager = new MCPServerManager(processManager);
-    const configEditorProvider = new ConfigEditorProvider(context.extensionUri);
-
-    // Register commands
-    const commands = [
-        vscode.commands.registerCommand('mcpSocketManager.openConfigEditor', () => {
-            configEditorProvider.createOrShowPanel();
-        }),
+/**
+ * VS Code extension activation function
+ */
+export async function activate(context: vscode.ExtensionContext): Promise<void> {
+    console.log('AlephScript Extension is activating...');
+    
+    try {
+        // Initialize extension bootstrap using getInstance
+        extensionBootstrap = ExtensionBootstrap.getInstance();
         
-        vscode.commands.registerCommand('mcpSocketManager.startLauncher', async () => {
-            try {
-                const config = vscode.workspace.getConfiguration('mcpSocketManager');
-                const configPath = config.get<string>('configPath');
-                
-                if (!configPath) {
-                    const result = await vscode.window.showOpenDialog({
-                        canSelectFiles: true,
-                        canSelectFolders: false,
-                        canSelectMany: false,
-                        filters: {
-                            'JSON files': ['json']
-                        }
-                    });
-                    
-                    if (result && result[0]) {
-                        await config.update('configPath', result[0].fsPath, vscode.ConfigurationTarget.Workspace);
-                        await processManager.startLauncher(result[0].fsPath);
-                    }
-                } else {
-                    await processManager.startLauncher(configPath);
-                }
-            } catch (error) {
-                vscode.window.showErrorMessage(`Failed to start launcher: ${error}`);
-            }
-        }),
+        // Initialize with VS Code context
+        await extensionBootstrap.initialize(context);
         
-        vscode.commands.registerCommand('mcpSocketManager.stopLauncher', async () => {
-            try {
-                await processManager.stopLauncher();
-                vscode.window.showInformationMessage('Launcher stopped successfully');
-            } catch (error) {
-                vscode.window.showErrorMessage(`Failed to stop launcher: ${error}`);
-            }
-        }),
+        console.log('AlephScript Extension activated successfully!');
         
-        vscode.commands.registerCommand('mcpSocketManager.openSocketMonitor', () => {
-            socketMonitor.createOrShowPanel(context.extensionUri);
-        }),
-        
-        vscode.commands.registerCommand('mcpSocketManager.manageUIs', () => {
-            uiManager.showUIManager();
-        }),
-        
-        vscode.commands.registerCommand('mcpSocketManager.manageMCPServers', () => {
-            mcpServerManager.showMCPManager();
-        })
-    ];
-
-    context.subscriptions.push(...commands);
-
-    // Auto-start if configured
-    const config = vscode.workspace.getConfiguration('mcpSocketManager');
-    if (config.get<boolean>('autoStart')) {
-        const configPath = config.get<string>('configPath');
-        if (configPath) {
-            processManager.startLauncher(configPath);
-        }
+    } catch (error) {
+        console.error('Failed to activate AlephScript Extension:', error);
+        vscode.window.showErrorMessage(`Failed to activate AlephScript Extension: ${error}`);
+        throw error;
     }
 }
 
-export function deactivate() {
-    console.log('MCP Socket Gamification Manager extension is being deactivated');
+/**
+ * VS Code extension deactivation function
+ */
+export async function deactivate(): Promise<void> {
+    console.log('AlephScript Extension is deactivating...');
+    
+    try {
+        if (extensionBootstrap) {
+            await extensionBootstrap.dispose();
+            extensionBootstrap = undefined;
+        }
+        
+        console.log('AlephScript Extension deactivated successfully!');
+        
+    } catch (error) {
+        console.error('Error during extension deactivation:', error);
+        throw error;
+    }
 }

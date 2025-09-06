@@ -1,0 +1,342 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://alephscript.dev/schemas/xplus1-config.json",
+  "title": "XPlus1 Configuration Schema",
+  "description": "Configuration schema for XPlus1 AlephScript applications",
+  "type": "object",
+  "properties": {
+    "gameName": {
+      "type": "string",
+      "description": "Name of the AlephScript game",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(-[a-zA-Z0-9]+)?$",
+      "description": "Semantic version of the game (e.g., 1.0.0)"
+    },
+    "description": {
+      "type": "string",
+      "description": "Brief description of the game",
+      "maxLength": 500
+    },
+    "socketIO": {
+      "type": "object",
+      "description": "Socket.IO server configuration",
+      "properties": {
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^wss?://",
+          "description": "WebSocket server URL"
+        },
+        "rooms": {
+          "type": "array",
+          "description": "List of Socket.IO rooms",
+          "items": {
+            "type": "string",
+            "enum": ["Application", "System", "UserInterface", "Debug"]
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "options": {
+          "type": "object",
+          "description": "Additional Socket.IO client options",
+          "properties": {
+            "transports": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["websocket", "polling"]
+              },
+              "default": ["websocket", "polling"]
+            },
+            "timeout": {
+              "type": "number",
+              "minimum": 1000,
+              "maximum": 60000,
+              "default": 20000,
+              "description": "Connection timeout in milliseconds"
+            },
+            "reconnection": {
+              "type": "boolean",
+              "default": true,
+              "description": "Enable automatic reconnection"
+            },
+            "reconnectionAttempts": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 10,
+              "default": 5,
+              "description": "Maximum number of reconnection attempts"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": ["url", "rooms"],
+      "additionalProperties": false
+    },
+    "ui": {
+      "type": "object",
+      "description": "User interface configuration",
+      "properties": {
+        "gamification": {
+          "type": "boolean",
+          "description": "Enable gamification features",
+          "default": true
+        },
+        "theme": {
+          "type": "string",
+          "enum": ["default", "dark", "light", "aleph-blue", "aleph-green"],
+          "description": "UI theme",
+          "default": "default"
+        },
+        "animations": {
+          "type": "boolean",
+          "description": "Enable UI animations",
+          "default": true
+        },
+        "layout": {
+          "type": "string",
+          "enum": ["grid", "flex", "auto"],
+          "description": "UI layout mode",
+          "default": "auto"
+        },
+        "components": {
+          "type": "array",
+          "description": "Enabled UI components",
+          "items": {
+            "type": "string",
+            "enum": ["video", "chat", "controls", "status", "logs", "debug"]
+          },
+          "uniqueItems": true,
+          "default": ["video", "chat", "controls", "status"]
+        }
+      },
+      "additionalProperties": false
+    },
+    "mcp": {
+      "type": "object",
+      "description": "Model Context Protocol configuration",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable MCP integration",
+          "default": true
+        },
+        "servers": {
+          "type": "array",
+          "description": "MCP server configurations",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Server name",
+                "minLength": 1
+              },
+              "command": {
+                "type": "string",
+                "description": "Command to start the server",
+                "minLength": 1
+              },
+              "args": {
+                "type": "array",
+                "description": "Command arguments",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "env": {
+                "type": "object",
+                "description": "Environment variables",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "autoStart": {
+                "type": "boolean",
+                "description": "Auto-start server on application launch",
+                "default": false
+              }
+            },
+            "required": ["name", "command"],
+            "additionalProperties": false
+          }
+        },
+        "timeout": {
+          "type": "number",
+          "minimum": 1000,
+          "maximum": 30000,
+          "default": 10000,
+          "description": "MCP server connection timeout in milliseconds"
+        }
+      },
+      "additionalProperties": false
+    },
+    "webrtc": {
+      "type": "object",
+      "description": "WebRTC configuration for real-time communication",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable WebRTC features",
+          "default": false
+        },
+        "iceServers": {
+          "type": "array",
+          "description": "ICE servers for WebRTC",
+          "items": {
+            "type": "object",
+            "properties": {
+              "urls": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "format": "uri"
+                  },
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "uri"
+                    }
+                  }
+                ]
+              },
+              "username": {
+                "type": "string",
+                "description": "TURN server username"
+              },
+              "credential": {
+                "type": "string",
+                "description": "TURN server credential"
+              }
+            },
+            "required": ["urls"],
+            "additionalProperties": false
+          }
+        },
+        "mediaConstraints": {
+          "type": "object",
+          "description": "Media constraints for WebRTC",
+          "properties": {
+            "video": {
+              "type": "boolean",
+              "default": true
+            },
+            "audio": {
+              "type": "boolean", 
+              "default": true
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "development": {
+      "type": "object",
+      "description": "Development and debugging configuration",
+      "properties": {
+        "debug": {
+          "type": "boolean",
+          "description": "Enable debug mode",
+          "default": false
+        },
+        "logLevel": {
+          "type": "string",
+          "enum": ["error", "warn", "info", "debug", "trace"],
+          "description": "Logging level",
+          "default": "info"
+        },
+        "hotReload": {
+          "type": "boolean",
+          "description": "Enable hot reload for development",
+          "default": true
+        },
+        "mockData": {
+          "type": "boolean",
+          "description": "Use mock data for development",
+          "default": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "performance": {
+      "type": "object",
+      "description": "Performance optimization settings",
+      "properties": {
+        "maxConnections": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 1000,
+          "default": 100,
+          "description": "Maximum concurrent connections"
+        },
+        "bufferSize": {
+          "type": "number",
+          "minimum": 1024,
+          "maximum": 1048576,
+          "default": 8192,
+          "description": "Buffer size in bytes"
+        },
+        "compressionEnabled": {
+          "type": "boolean",
+          "description": "Enable data compression",
+          "default": true
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "gameName",
+    "version",
+    "socketIO"
+  ],
+  "additionalProperties": false,
+  "examples": [
+    {
+      "gameName": "My AlephScript Game",
+      "version": "1.0.0",
+      "description": "A revolutionary gamification experience",
+      "socketIO": {
+        "url": "ws://localhost:3000",
+        "rooms": ["Application", "System", "UserInterface"],
+        "options": {
+          "transports": ["websocket"],
+          "reconnection": true,
+          "reconnectionAttempts": 3
+        }
+      },
+      "ui": {
+        "gamification": true,
+        "theme": "aleph-blue",
+        "animations": true,
+        "layout": "grid",
+        "components": ["video", "chat", "controls", "status"]
+      },
+      "mcp": {
+        "enabled": true,
+        "servers": [
+          {
+            "name": "state-machine-server",
+            "command": "node",
+            "args": ["server.js"],
+            "autoStart": true
+          }
+        ],
+        "timeout": 10000
+      },
+      "development": {
+        "debug": false,
+        "logLevel": "info",
+        "hotReload": true
+      }
+    }
+  ]
+}

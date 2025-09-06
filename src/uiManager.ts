@@ -157,10 +157,12 @@ export class UIManager {
             const processInfo: ProcessInfo = {
                 id: ui.id,
                 name: `UI: ${ui.name}`,
-                process: uiProcess,
+                pid: uiProcess.pid || 0,
+                command: `${command} ${args.join(' ')}`,
                 status: 'running',
                 port: ui.port,
-                logs: []
+                workingDirectory: process.cwd(),
+                startTime: new Date()
             };
 
             // Update UI status
