@@ -1,14 +1,13 @@
 # RONDA 1 — DEVELOPMENT
 
 ## Tareas
-- [x] Auditar `extension.ts`
-- [x] Definir interfaces MCP (`src/mcpTypes.ts`)
-- [x] Registrar comandos base (incl. `mcpSocketManager.activate`)
+- [ ] Auditar `extension.ts`
+- [ ] Definir interfaces MCP
+- [ ] Registrar comandos base
 
 ## Cambios Propuestos/Realizados
-- Contratos MCP: `IMcpClient`, `IMcpServerDescriptor` (archivo `src/mcpTypes.ts`)
-- OutputChannel existente: `MCP Socket Manager` (reutilizado)
-- Activación robusta en `package.json` y `src/extension.ts`
+- Contratos MCP: `IMcpClient`, `IMcpServer`
+- OutputChannel: `AlephScript`
 
 ## Notas Técnicas
 - Mantener acoplamiento bajo entre UI y backend (patrón adaptador).

@@ -1,5 +1,7 @@
 # PLAN DE VIBECODING: VS CODE ALEPHSCRIPT EXTENSION REFACTORING
 
+Nota: En la carpeta GENERALISTIC-VERSION hay un plan generalista que puede ser tomado como plano ancho de referencia.
+
 ## 🎯 OBJETIVO PRINCIPAL
 Transformar la actual extensión webview-heavy en una integración nativa VS Code que maximice:
 - **TreeViews** para navegación de agentes/UIs/configs
